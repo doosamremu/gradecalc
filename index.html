@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GPA Calculator - Personal Session</title>
+    <style>
+        :root {
+            --primary-color: #0056b3;
+            --secondary-color: #f4f7f6;
+            --danger-color: #dc3545;
+            --success-color: #28a745;
+            --accent-color: #6610f2;
+            --text-color: #333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--secondary-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        .container {
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            width: 100%;
+            max-width: 800px;
+        }
+
+        /* Session Indicator */
+        .session-info {
+            background-color: #e3f2fd;
+            color: #0d47a1;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            text-align: center;
+            margin-bottom: 20px;
+            border: 1px solid #bbdefb;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+        .session-icon { font-size: 1.2em; }
+
+        h1 {
+            text-align: center;
+            color: var(--text-color);
+            margin-bottom: 25px;
+            font-weight: 700;
+        }
+
+        /* --- PRESET SECTION --- */
+        .preset-wrapper {
+            background-color: #fff;
+            border: 2px dashed #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .preset-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .preset-header h4 { margin: 0; color: #555; }
+
+        .preset-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        select.preset-select {
+            flex-grow: 1;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #ced4da;
+            font-size: 1em;
+            color: #495057;
+            min-width: 200px;
+        }
+
+        .btn-delete-preset {
+            background-color: white;
+            color: var(--danger-color);
+            border: 1px solid var(--danger-color);
+            padding: 8px 15px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            display: none; 
+            transition: all 0.2s;
+        }
+        .btn-delete-preset:hover { background-color: var(--danger-color); color: white; }
+
+        /* --- SCHEME TOGGLE --- */
+        .scheme-toggle-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 30px;
+            background: #e9ecef;
+            padding: 5px;
+            border-radius: 25px;
+            width: fit-content;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .scheme-toggle-container input[type="radio"] { display: none; }
+
+        .scheme-toggle-container label {
+            padding: 8px 25px;
+            cursor: pointer;
+            border-radius: 20px;
+            transition: all 0.3s;
+            font-weight: 600;
+            color: #555;
+            font-size: 0.9rem;
+        }
+
+        #scheme-old:checked + label[for="scheme-old"] { background-color: var(--primary-color); color: white; }
+        #scheme-new:checked + label[for="scheme-new"] { background-color: var(--success-color); color: white; }
+
+        /* --- SUBJECT LIST --- */
+        .subject-row {
+            display: grid;
+            grid-template-columns: 3fr 1fr 1fr 1fr auto;
+            gap: 10px;
+            margin-bottom: 12px;
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 8px;
+            align-items: center;
+            border: 1px solid #e9ecef;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+
+        .form-group { display: flex; flex-direction: column; }
+        .form-group label { font-size: 0.75rem; margin-bottom: 4px; color: #888; font-weight: 700; text-transform: uppercase; }
+
+        input[type="text"], input[type="number"] {
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            font-size: 1em;
+            transition: border-color 0.2s;
+        }
+        input:focus { outline: none; border-color: var(--primary-color); }
+        
+        .row-gp-display { text-align: center; font-weight: bold; color: var(--primary-color); font-size: 1.1em; }
+
+        /* --- BUTTONS --- */
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .action-row { display: flex; gap: 10px; margin-bottom: 20px; }
+
+        .btn-add { background-color: #f1f3f5; color: #333; border: 1px solid #ced4da; flex: 1; }
+        .btn-add:hover { background-color: #e9ecef; }
+
+        .btn-save-preset { background-color: #fff; color: var(--accent-color); border: 1px solid var(--accent-color); flex: 1; }
+        .btn-save-preset:hover { background-color: var(--accent-color); color: white; }
+
+        .btn-remove {
+            background-color: #fff0f0; color: var(--danger-color);
+            padding: 0; width: 36px; height: 36px;
+            border-radius: 50%; display: flex; justify-content: center; align-items: center;
+            font-size: 1.2rem;
+        }
+        .btn-remove:hover { background-color: var(--danger-color); color: white; }
+
+        .btn-calculate { background-color: var(--primary-color); color: white; width: 100%; font-size: 1.2em; box-shadow: 0 4px 6px rgba(0,86,179,0.2); }
+        .btn-calculate:hover { background-color: #004494; transform: translateY(-1px); }
+
+        .btn-clear-all {
+            display: block; margin: 20px auto 0; background: none; border: none;
+            color: #999; font-size: 0.85rem; text-decoration: underline; cursor: pointer;
+        }
+        .btn-clear-all:hover { color: var(--danger-color); }
+
+        /* --- RESULT --- */
+        #result-section {
+            margin-top: 30px; text-align: center; padding: 25px;
+            background-color: #e8f4fd; border-radius: 12px;
+            border: 2px solid var(--primary-color); display: none; 
+        }
+
+        #gpa-value { font-size: 3.5em; font-weight: 800; color: var(--primary-color); display: block; margin-top: 5px; }
+
+        @media (max-width: 700px) {
+            .subject-row { grid-template-columns: 1fr 1fr; gap: 15px; position: relative; padding-top: 25px; }
+            .subject-row .form-group:first-child { grid-column: 1 / -1; }
+            .btn-remove { position: absolute; top: 10px; right: 10px; width: 28px; height: 28px; font-size: 1rem; }
+            .row-gp-display { grid-column: 1 / -1; text-align: left; background: #f8f9fa; padding: 8px; border-radius: 4px; display: flex; justify-content: space-between; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    
+    <div class="session-info">
+        <span class="session-icon">🔒</span>
+        <span>Secure Session: Your presets are stored privately on this device.</span>
+    </div>
+
+    <h1>University GPA Calculator</h1>
+
+    <div class="preset-wrapper">
+        <div class="preset-header">
+            <h4>📂 Saved Presets</h4>
+        </div>
+        <div class="preset-controls">
+            <select id="preset-selector" class="preset-select">
+                <option value="" disabled selected>-- Select to Load --</option>
+            </select>
+            <button id="delete-preset-btn" class="btn-delete-preset">Delete Selected</button>
+        </div>
+    </div>
+
+    <div class="scheme-toggle-container">
+        <input type="radio" id="scheme-new" name="scheme" value="new" checked>
+        <label for="scheme-new">New Scheme</label>
+
+        <input type="radio" id="scheme-old" name="scheme" value="old">
+        <label for="scheme-old">Old Scheme</label>
+    </div>
+
+    <div id="subject-list">
+        </div>
+
+    <div class="action-row">
+        <button class="btn btn-add" id="add-subject-btn">+ Add Row</button>
+        <button class="btn btn-save-preset" id="save-preset-btn">💾 Save as Preset</button>
+    </div>
+    
+    <button class="btn btn-calculate" id="calculate-btn">Calculate GPA</button>
+
+    <div id="result-section">
+        <h3>Your GPA is:</h3>
+        <span id="gpa-value">0.00</span>
+    </div>
+
+    <button class="btn-clear-all" id="clear-storage-btn">⚠ Reset all data for this device</button>
+</div>
+
+<script>
+    // --- 1. DEFAULT EXAMPLES ---
+    const DEFAULT_PRESETS = {
+        "BS_CS_1": {
+            label: "Example: Computer Science (Sem 1)",
+            subjects: [
+                { name: "Intro to ICT", credits: 3 },
+                { name: "Prog. Fundamentals", credits: 4 },
+                { name: "English Comp", credits: 3 },
+                { name: "Calculus", credits: 3 },
+                { name: "Physics", credits: 3 }
+            ],
+            isDefault: true 
+        }
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // DOM Elements
+        const subjectList = document.getElementById('subject-list');
+        const addBtn = document.getElementById('add-subject-btn');
+        const savePresetBtn = document.getElementById('save-preset-btn');
+        const calculateBtn = document.getElementById('calculate-btn');
+        const resultSection = document.getElementById('result-section');
+        const gpaValueDisplay = document.getElementById('gpa-value');
+        const schemeRadios = document.querySelectorAll('input[name="scheme"]');
+        const presetSelector = document.getElementById('preset-selector');
+        const deletePresetBtn = document.getElementById('delete-preset-btn');
+        const clearStorageBtn = document.getElementById('clear-storage-btn');
+
+        let rowCount = 0;
+
+        // --- 2. STORAGE ENGINE (The "IP/Device" Logic) ---
+        // This utilizes the browser's unique LocalStorage. 
+        // Data saved here is invisible to other users/browsers.
+        
+        function getSavedPresets() {
+            const stored = localStorage.getItem('gpa_calc_user_data');
+            return stored ? JSON.parse(stored) : {};
+        }
+
+        function savePresetsToStorage(presets) {
+            localStorage.setItem('gpa_calc_user_data', JSON.stringify(presets));
+        }
+
+        function renderPresetDropdown() {
+            presetSelector.innerHTML = '<option value="" disabled selected>-- Select to Load --</option>';
+            
+            // Defaults
+            const defaultGroup = document.createElement('optgroup');
+            defaultGroup.label = "Templates";
+            for (const key in DEFAULT_PRESETS) {
+                const opt = document.createElement('option');
+                opt.value = "DEF::" + key; 
+                opt.textContent = DEFAULT_PRESETS[key].label;
+                defaultGroup.appendChild(opt);
+            }
+            presetSelector.appendChild(defaultGroup);
+
+            // User Saved
+            const userPresets = getSavedPresets();
+            const userGroup = document.createElement('optgroup');
+            userGroup.label = "My Personal Presets";
+            
+            const keys = Object.keys(userPresets);
+            if (keys.length > 0) {
+                keys.forEach(key => {
+                    const opt = document.createElement('option');
+                    opt.value = "USR::" + key;
+                    opt.textContent = key;
+                    userGroup.appendChild(opt);
+                });
+                presetSelector.appendChild(userGroup);
+            }
+        }
+
+        renderPresetDropdown();
+
+        // --- 3. EVENT HANDLERS ---
+
+        // Load
+        presetSelector.addEventListener('change', (e) => {
+            const val = e.target.value;
+            const [type, key] = val.split("::");
+            let data = null;
+
+            if (type === "DEF") {
+                data = DEFAULT_PRESETS[key].subjects;
+                deletePresetBtn.style.display = "none";
+            } else if (type === "USR") {
+                const userPresets = getSavedPresets();
+                data = userPresets[key];
+                deletePresetBtn.style.display = "inline-block";
+            }
+
+            if (data) {
+                subjectList.innerHTML = '';
+                rowCount = 0;
+                data.forEach(sub => addSubjectRow(sub.name, sub.credits));
+            }
+        });
+
+        // Save
+        savePresetBtn.addEventListener('click', () => {
+            const rows = document.querySelectorAll('.subject-row');
+            if (rows.length === 0) return alert("Add some subjects first!");
+
+            const name = prompt("Name this preset (e.g., 'Fall 2025'):");
+            if (!name) return;
+
+            const subjectsToSave = [];
+            rows.forEach(row => {
+                const sName = row.querySelector('.name-input').value;
+                const sCred = row.querySelector('.credit-input').value;
+                subjectsToSave.push({ name: sName, credits: sCred });
+            });
+
+            const userPresets = getSavedPresets();
+            userPresets[name] = subjectsToSave;
+            savePresetsToStorage(userPresets);
+            
+            alert(`Saved "${name}" to this device!`);
+            renderPresetDropdown();
+            presetSelector.value = "USR::" + name;
+            deletePresetBtn.style.display = "inline-block";
+        });
+
+        // Delete Single
+        deletePresetBtn.addEventListener('click', () => {
+            const val = presetSelector.value;
+            if (!val.startsWith("USR::")) return;
+            const key = val.split("::")[1];
+            
+            if (confirm(`Delete "${key}"?`)) {
+                const userPresets = getSavedPresets();
+                delete userPresets[key];
+                savePresetsToStorage(userPresets);
+                renderPresetDropdown();
+                deletePresetBtn.style.display = "none";
+                presetSelector.selectedIndex = 0;
+            }
+        });
+
+        // Clear All (Reset Device)
+        clearStorageBtn.addEventListener('click', () => {
+            if(confirm("Are you sure? This will delete ALL your saved presets on this browser.")) {
+                localStorage.removeItem('gpa_calc_user_data');
+                renderPresetDropdown();
+                location.reload();
+            }
+        });
+
+        // --- 4. CALCULATION LOGIC ---
+        function getOldSchemeGP(marks) {
+            marks = Math.round(marks);
+            if (marks >= 80) return 4.00;
+            if (marks >= 76) return 3.80;
+            if (marks >= 72) return 3.50;
+            if (marks >= 68) return 3.00;
+            if (marks >= 64) return 2.80;
+            if (marks >= 60) return 2.50;
+            if (marks >= 55) return 2.00;
+            if (marks >= 50) return 1.00;
+            return 0.00;
+        }
+
+        function getNewSchemeGP(marks) {
+            marks = Math.round(marks);
+            if (marks < 50) return 0.00;
+            if (marks >= 80) return 4.00;
+            if (marks >= 65) return 2.50 + (marks - 65) * 0.1;
+            if (marks >= 50) return 1.00 + (marks - 50) * 0.1;
+            return 0.00;
+        }
+
+        function getCurrentSchemeGP(marks) {
+            const selectedScheme = document.querySelector('input[name="scheme"]:checked').value;
+            return selectedScheme === 'old' ? getOldSchemeGP(marks) : getNewSchemeGP(marks);
+        }
+
+        function updateRowGP(rowElement) {
+            const marksInput = rowElement.querySelector('.marks-input');
+            const gpDisplay = rowElement.querySelector('.gp-value');
+            const marks = parseFloat(marksInput.value);
+
+            if (!isNaN(marks) && marks >= 0 && marks <= 100) {
+                gpDisplay.textContent = getCurrentSchemeGP(marks).toFixed(2);
+            } else {
+                gpDisplay.textContent = "-";
+            }
+        }
+
+        schemeRadios.forEach(radio => {
+            radio.addEventListener('change', () => {
+                document.querySelectorAll('.subject-row').forEach(row => updateRowGP(row));
+            });
+        });
+
+        function addSubjectRow(name = "", credits = "") {
+            rowCount++;
+            const row = document.createElement('div');
+            row.className = 'subject-row';
+            
+            const nameValue = name ? `value="${name}"` : '';
+            const creditsValue = credits ? `value="${credits}"` : '';
+            
+            row.innerHTML = `
+                <div class="form-group">
+                    <label>Subject</label>
+                    <input type="text" class="name-input" ${nameValue} placeholder="e.g. Calculus">
+                </div>
+                <div class="form-group">
+                    <label>Credits</label>
+                    <input type="number" class="credit-input" ${creditsValue} min="1" max="6" placeholder="Cr">
+                </div>
+                <div class="form-group">
+                    <label>Marks</label>
+                    <input type="number" class="marks-input" min="0" max="100" placeholder="0-100">
+                </div>
+                <div class="form-group row-gp-display">
+                   <label>GP</label>
+                   <span class="gp-value">-</span>
+                </div>
+                <button class="btn btn-remove" title="Remove Subject">×</button>
+            `;
+
+            row.querySelector('.marks-input').addEventListener('input', () => updateRowGP(row));
+            row.querySelector('.btn-remove').addEventListener('click', function() {
+                this.closest('.subject-row').remove();
+            });
+            subjectList.appendChild(row);
+        }
+
+        function calculateFinalGPA() {
+            let totalPoints = 0;
+            let totalCredits = 0;
+            let allValid = true;
+            const rows = document.querySelectorAll('.subject-row');
+
+            if (rows.length === 0) return alert("Please add at least one subject.");
+
+            rows.forEach(row => {
+                const creditsStr = row.querySelector('.credit-input').value;
+                const marksStr = row.querySelector('.marks-input').value;
+
+                if (creditsStr === '' || marksStr === '') {
+                    allValid = false;
+                    row.style.border = "2px solid var(--danger-color)";
+                } else {
+                    row.style.border = "1px solid #e9ecef";
+                    const credits = parseFloat(creditsStr);
+                    const marks = parseFloat(marksStr);
+
+                    if(credits <= 0 || marks < 0 || marks > 100) {
+                         allValid = false;
+                         return;
+                    }
+                    totalPoints += (getCurrentSchemeGP(marks) * credits);
+                    totalCredits += credits;
+                }
+            });
+
+            if (!allValid) return alert("Please fill in all Credit and Marks fields.");
+
+            const gpa = totalCredits === 0 ? 0 : (totalPoints / totalCredits);
+            gpaValueDisplay.textContent = gpa.toFixed(2);
+            resultSection.style.display = 'block';
+            resultSection.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        addBtn.addEventListener('click', () => addSubjectRow());
+        calculateBtn.addEventListener('click', calculateFinalGPA);
+        
+        // Initial Empty Rows
+        addSubjectRow();
+        addSubjectRow();
+        addSubjectRow();
+    });
+</script>
+
+</body>
+</html>
